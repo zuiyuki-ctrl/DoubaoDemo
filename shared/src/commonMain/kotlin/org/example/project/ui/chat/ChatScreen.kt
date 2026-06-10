@@ -47,6 +47,9 @@ import org.example.project.presentation.ChatViewModel
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 
+private const val OperatingHandSwitchConfirmationCount = 2
+private const val ShowOperatingHandDebug = false
+
 @Composable
 fun ChatScreen(
     config: ChatAppConfig = ChatAppConfig(),
@@ -79,6 +82,8 @@ fun ChatScreen(
     var operatingHandFeatureText by remember {
         mutableStateOf("Track: avgX=-- startX=-- endX=-- avgY=-- duration=--")
     }
+    var pendingOperatingHand by remember { mutableStateOf(OperatingHand.UNKNOWN) }
+    var pendingOperatingHandCount by remember { mutableStateOf(0) }
 
     Column(
         modifier = Modifier
@@ -89,16 +94,39 @@ fun ChatScreen(
                     val prediction = operatingHandClassifier.classify(points)
                     val shouldUsePrediction =
                         prediction.hand != OperatingHand.UNKNOWN && prediction.score >= 0.55f
+                    var switchedHand = false
+
+                    if (shouldUsePrediction) {
+                        if (prediction.hand == operatingHand) {
+                            pendingOperatingHand = OperatingHand.UNKNOWN
+                            pendingOperatingHandCount = 0
+                        } else {
+                            if (prediction.hand == pendingOperatingHand) {
+                                pendingOperatingHandCount += 1
+                            } else {
+                                pendingOperatingHand = prediction.hand
+                                pendingOperatingHandCount = 1
+                            }
+
+                            if (pendingOperatingHandCount >= OperatingHandSwitchConfirmationCount) {
+                                operatingHand = prediction.hand
+                                pendingOperatingHand = OperatingHand.UNKNOWN
+                                pendingOperatingHandCount = 0
+                                switchedHand = true
+                            }
+                        }
+                    } else {
+                        pendingOperatingHand = OperatingHand.UNKNOWN
+                        pendingOperatingHandCount = 0
+                    }
 
                     operatingHandDebugText = "Hand: ${prediction.hand.name} " +
                         "score=${prediction.score.formatScore()} " +
                         "points=${points.size} " +
-                        "used=$shouldUsePrediction"
+                        "used=$shouldUsePrediction " +
+                        "pending=${pendingOperatingHand.name}:$pendingOperatingHandCount " +
+                        "switched=$switchedHand"
                     operatingHandFeatureText = points.toDebugSummary()
-
-                    if (shouldUsePrediction) {
-                        operatingHand = prediction.hand
-                    }
                 }
             }
             .background(Color(0xFFF7F8FA))
@@ -120,24 +148,26 @@ fun ChatScreen(
             onFollowUpClick = viewModel::sendFollowUp
         )
 
-        Text(
-            text = operatingHandDebugText,
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(Color(0xFFFFF7D6))
-                .padding(horizontal = 12.dp, vertical = 3.dp),
-            color = Color(0xFF7A4D00),
-            fontSize = 12.sp
-        )
-        Text(
-            text = operatingHandFeatureText,
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(Color(0xFFFFF7D6))
-                .padding(horizontal = 12.dp, vertical = 3.dp),
-            color = Color(0xFF7A4D00),
-            fontSize = 12.sp
-        )
+        if (ShowOperatingHandDebug) {
+            Text(
+                text = operatingHandDebugText,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color(0xFFFFF7D6))
+                    .padding(horizontal = 12.dp, vertical = 3.dp),
+                color = Color(0xFF7A4D00),
+                fontSize = 12.sp
+            )
+            Text(
+                text = operatingHandFeatureText,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color(0xFFFFF7D6))
+                    .padding(horizontal = 12.dp, vertical = 3.dp),
+                color = Color(0xFF7A4D00),
+                fontSize = 12.sp
+            )
+        }
 
         ChatInputBar(
             text = uiState.inputText,
