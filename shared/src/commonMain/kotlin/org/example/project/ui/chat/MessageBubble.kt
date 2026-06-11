@@ -6,7 +6,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.widthIn
@@ -23,6 +22,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -62,14 +62,14 @@ fun MessageBubble(
             Arrangement.Start
         }
     ) {
-        Surface(
-            color = if (message.isFromUser) Color(0xFFCDEBFF) else Color(0xFFF2F3F5),
-            shape = RoundedCornerShape(16.dp),
-            modifier = Modifier.fillMaxWidth(0.78f)
-        ) {
-            if (message.isFromUser) {
-                MessageText(message.content)
-            } else {
+        if (message.isFromUser) {
+            UserMessageContent(message = message)
+        } else {
+            Surface(
+                color = Color(0xFFF2F3F5),
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier.fillMaxWidth(0.78f)
+            ) {
                 Column {
                     MessageText(
                         content = message.content,
@@ -106,20 +106,57 @@ fun MessageBubble(
 }
 
 @Composable
-private fun GeneratedImage(imageDataUrl: String) {
+private fun UserMessageContent(message: ChatMessage) {
+    Column(
+        modifier = Modifier.fillMaxWidth(0.78f),
+        horizontalAlignment = Alignment.End,
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        if (message.imageDataUrl != null) {
+            MessageImage(
+                imageDataUrl = message.imageDataUrl,
+                contentDescription = "用户发送的图片"
+            )
+        }
+
+        if (message.content.isNotBlank()) {
+            Surface(
+                color = Color(0xFFCDEBFF),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                MessageText(message.content)
+            }
+        }
+    }
+}
+
+@Composable
+private fun MessageImage(
+    imageDataUrl: String,
+    contentDescription: String,
+    modifier: Modifier = Modifier
+) {
     val imageBitmap = remember(imageDataUrl) {
         imageBitmapFromDataUrl(imageDataUrl)
     } ?: return
 
     Image(
         bitmap = imageBitmap,
-        contentDescription = "AI 生成图片",
-        modifier = Modifier
-            .padding(horizontal = 14.dp)
+        contentDescription = contentDescription,
+        modifier = modifier
             .fillMaxWidth()
             .height(220.dp)
             .clip(RoundedCornerShape(12.dp)),
         contentScale = ContentScale.Crop
+    )
+}
+
+@Composable
+private fun GeneratedImage(imageDataUrl: String) {
+    MessageImage(
+        imageDataUrl = imageDataUrl,
+        contentDescription = "AI 生成图片",
+        modifier = Modifier.padding(horizontal = 14.dp)
     )
 }
 
@@ -194,7 +231,7 @@ private fun MessageActionBar(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 12.dp, vertical = 8.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        horizontalArrangement = Arrangement.SpaceBetween
     ) {
         ActionIconButton(
             icon = if (copied) Res.drawable.ic_check else Res.drawable.ic_copy,
@@ -235,8 +272,6 @@ private fun MessageActionBar(
             onClick = { onDislikeClick(message) }
         )
 
-        Spacer(modifier = Modifier.weight(1f))
-
         ActionIconButton(
             icon = Res.drawable.ic_retry,
             isSelected = false,
@@ -257,7 +292,7 @@ private fun ActionIconButton(
         painter = painterResource(icon),
         contentDescription = contentDescription,
         modifier = Modifier
-            .size(40.dp)
+            .size(36.dp)
             .clip(RoundedCornerShape(12.dp))
             .background(
                 if (isSelected) {

@@ -59,15 +59,11 @@ class ChatViewModel(
         imageDataUrl: String
     ) {
         val prompt = text.trim()
-        val displayText = if (prompt.isEmpty()) {
-            "[图片]"
-        } else {
-            "[图片] $prompt"
-        }
         val userMessage = ChatMessage(
             id = messageId++,
-            content = displayText,
-            isFromUser = true
+            content = prompt,
+            isFromUser = true,
+            imageDataUrl = imageDataUrl
         )
         val loadingMessage = ChatMessage(
             id = messageId++,
