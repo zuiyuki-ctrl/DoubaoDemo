@@ -202,9 +202,10 @@ class MainActivity : ComponentActivity() {
                     ).show()
                 },
                 onSpeakClick = { message ->
+                    val speechText = message.content.toSpeechText()
                     coroutineScope.launch {
                         val audioBytes = runCatching {
-                            ttsRepository.synthesize(message.content)
+                            ttsRepository.synthesize(speechText)
                         }.getOrElse { throwable ->
                             Log.e("DoubaoTTS", "豆包语音合成失败", throwable)
                             Toast.makeText(
@@ -224,7 +225,7 @@ class MainActivity : ComponentActivity() {
                         } else if (isTtsReady) {
                             textToSpeech.language = Locale.CHINESE
                             textToSpeech.speak(
-                                message.content,
+                                speechText,
                                 TextToSpeech.QUEUE_FLUSH,
                                 null,
                                 "message-${message.id}"
@@ -304,6 +305,24 @@ class MainActivity : ComponentActivity() {
 }
 
 private const val WAV_HEADER_SIZE = 44
+
+private val searchReferenceTipRegex = Regex(
+    pattern = """^搜索\s*\d+\s*个关键词，参考\s*\d+\s*篇(资料|文献)\s*>?\s*$"""
+)
+
+private fun String.toSpeechText(): String {
+    val lines = lines()
+    val speechLines = if (lines.firstOrNull()?.matches(searchReferenceTipRegex) == true) {
+        lines.drop(1)
+    } else {
+        lines
+    }
+
+    return speechLines
+        .joinToString("\n")
+        .trim()
+        .ifBlank { trim() }
+}
 
 private fun Uri.toImageDataUrl(context: Context): String {
     val mimeType = context.contentResolver.getType(this) ?: "image/jpeg"
