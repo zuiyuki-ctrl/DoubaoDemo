@@ -158,35 +158,33 @@ class ChatViewModel(
             content = text,
             isFromUser = true
         )
+        val loadingMessage = ChatMessage(
+            id = messageId++,
+            content = "正在思考...",
+            isFromUser = false,
+            isLoading = true
+        )
 
         uiState = uiState.copy(
-            messages = uiState.messages + userMessage
+            messages = uiState.messages + userMessage + loadingMessage
         )
         saveHistoryMessages()
 
         viewModelScope.launch {
-            val useWebSearch = chatRepository.shouldUseWebSearch(text)
-
             val intent = chatRepository.classifyTextIntent(text)
 
-            val loadingMessage = ChatMessage(
-                id = messageId++,
-                content = when(intent){
-                    ChatIntent.NORMAL -> "正在思考..."
-                    ChatIntent.WEB_SEARCH -> "正在搜索..."
-                    ChatIntent.IMAGE_GENERATION -> "正在生成图片..."
-                },
-                isFromUser = false,
-                isLoading = true
-            )
-
-            uiState = uiState.copy(
-                messages = uiState.messages + loadingMessage
-            )
-            saveHistoryMessages()
+            updateMessage(loadingMessage.id) { oldMessage ->
+                oldMessage.copy(
+                    content = when (intent) {
+                        ChatIntent.NORMAL -> "正在思考..."
+                        ChatIntent.WEB_SEARCH -> "正在搜索..."
+                        ChatIntent.IMAGE_GENERATION -> "正在生成图片..."
+                    }
+                )
+            }
 
             val reply = runCatching {
-                when(intent){
+                when (intent) {
                     ChatIntent.IMAGE_GENERATION -> chatRepository.generateImage(text)
                     ChatIntent.WEB_SEARCH -> chatRepository.sendTextMessage(
                         userText = text,
