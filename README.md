@@ -17,24 +17,6 @@
 - 消息互动：支持复制、点赞、点踩、重新回复和追问。
 - 左右手识别：端侧识别用户当前操作手，动态调整发送按钮左右位置。
 
-## 技术栈
-
-| 模块 | 技术 |
-| --- | --- |
-| 跨平台框架 | Kotlin Multiplatform |
-| UI 框架 | Compose Multiplatform |
-| Android 宿主 | Android Activity + Compose |
-| 状态管理 | ViewModel + Compose state |
-| 网络请求 | Ktor Client |
-| JSON 序列化 | kotlinx.serialization |
-| 本地存储 | SharedPreferences + JSON |
-| 大模型能力 | 豆包 Ark Chat / Vision / Image |
-| 联网搜索 | 火山引擎 Web Search |
-| 语音识别 | 火山引擎 ASR |
-| 语音合成 | 火山引擎 TTS + Android TextToSpeech |
-| 端侧推理 | LiteRT / TensorFlow Lite Interpreter |
-| 模型训练 | Python + TensorFlow + NumPy |
-
 ## 项目结构
 
 ```text
@@ -76,9 +58,7 @@ KotlinProject
 
 ## 本地配置
 
-项目中的模型接口 Key 通过 `local.properties` 注入，不应提交到 GitHub。
-
-在项目根目录创建或修改 `local.properties`：
+项目中的模型接口 Key 通过 `local.properties` ，在项目根目录创建或修改 `local.properties`：
 
 ```properties
 DOUBAO_API_KEY=your_api_key
@@ -211,13 +191,6 @@ private const val ShowOperatingHandDebug = true
 ```powershell
 .\gradlew.bat :androidApp:assembleDebug
 ```
-
-## 注意事项
-
-- `.venv/`、`.gradle/`、`build/` 等本地环境和构建产物不应提交到 Git。
-- `local.properties` 包含敏感 Key，不应提交到 Git。
-- `androidApp/src/main/assets/operating_hand.tflite` 是客户端运行所需的端侧模型，可以随项目提交。
-- Debug APK 使用调试签名，如果覆盖安装失败，可能是签名不一致，需要先卸载旧版本。
 
 ## 参考
 
